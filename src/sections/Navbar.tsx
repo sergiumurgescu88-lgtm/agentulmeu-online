@@ -18,8 +18,14 @@ export default function Navbar() {
     { label: 'Funcționalități', href: '#features' },
     { label: 'Instalare', href: '#install' },
     { label: 'Flux', href: '#flow' },
+    { label: 'Dashboard', href: '/dashboard', isRoute: true },
     { label: 'Contact', href: '#footer' },
   ]
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <nav
@@ -36,16 +42,27 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm text-white/70 hover:text-white transition-colors relative group"
-            >
-              {link.label}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 transition-all group-hover:w-full" />
-            </a>
-          ))}
+          {links.map((link) =>
+            link.isRoute ? (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="text-sm text-white/70 hover:text-white transition-colors relative group"
+              >
+                {link.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 transition-all group-hover:w-full" />
+              </Link>
+            ) : (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm text-white/70 hover:text-white transition-colors relative group"
+              >
+                {link.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 transition-all group-hover:w-full" />
+              </a>
+            )
+          )}
         </div>
 
         <div className="hidden md:flex items-center gap-3">
@@ -56,10 +73,7 @@ export default function Navbar() {
             </Button>
           </a>
           <Button 
-            onClick={() => {
-              const el = document.getElementById('install')
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }}
+            onClick={() => scrollTo('install')}
             className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 glow-cyan"
           >
             Începe Gratuit
@@ -76,16 +90,27 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden glass-strong mt-3 mx-6 rounded-xl p-4 space-y-3">
-          {links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className="block text-white/80 hover:text-white py-2 transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
+          {links.map((link) =>
+            link.isRoute ? (
+              <Link
+                key={link.href}
+                to={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="block text-white/80 hover:text-white py-2 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="block text-white/80 hover:text-white py-2 transition-colors"
+              >
+                {link.label}
+              </a>
+            )
+          )}
           <div className="pt-3 border-t border-white/10 flex gap-3">
             <a href="https://github.com/NousResearch" target="_blank" rel="noopener noreferrer" className="flex-1">
               <Button variant="ghost" className="w-full text-white/80">GitHub</Button>
@@ -93,8 +118,7 @@ export default function Navbar() {
             <Button 
               onClick={() => {
                 setMobileOpen(false)
-                const el = document.getElementById('install')
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                scrollTo('install')
               }}
               className="flex-1 bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0"
             >

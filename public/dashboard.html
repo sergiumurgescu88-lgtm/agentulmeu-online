@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgentulMeu.online — Configurare Agent AI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    /* ===== VARIABLES — Match AgentulMeu.online Design ===== */
+    :root {
+      /* Culori principale — bazate pe screenshot-urile tale */
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #1e293b;
+      --bg-hover: #334155;
+      --border: #334155;
+      --border-focus: #6366f1;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.4);
+      
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --info: #3b82f6;
+      
+      --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+      --gradient-card: linear-gradient(145deg, #1e293b, #0f172a);
+      --gradient-progress: linear-gradient(90deg, #6366f1, #a855f7);
+      
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 10px 40px -10px rgba(0,0,0,0.6);
+      --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.25);
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    /* ===== RESET & BASE ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html { scroll-behavior: smooth; }
+    
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* ===== BACKGROUND EFFECTS ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 80%, rgba(99,102,241,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(168,85,247,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      text-align: center;
+      padding: 28px 24px;
+      background: var(--gradient-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+      opacity: 0.8;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--gradient-primary);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+    
+    .progress-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .progress-percent {
+      color: var(--primary);
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    
+    .progress-bar {
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--gradient-progress);
+      border-radius: 3px;
+      width: 0%;
+      transition: width var(--transition-slow);
+      position: relative;
+    }
+    
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ===== STEP INDICATORS ===== */
+    .steps-nav {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .steps-nav::-webkit-scrollbar { display: none; }
+    
+    .step-indicator {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    
+    .step-indicator.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+    
+    .step-indicator.completed {
+      background: var(--bg-secondary);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    /* ===== FORM CARD ===== */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-md);
+      animation: slideUp 0.4s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .form-card h2 .step-num {
+      background: var(--gradient-primary);
+      color: white;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    
+    .form-card > p {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+
+    /* ===== FORM ELEMENTS ===== */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+    
+    .form-group label .required {
+      color: var(--error);
+      margin-left: 2px;
+    }
+    
+    .form-group small {
+      display: block;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-size: 0.85rem;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: var(--font-main);
+    }
+    
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    /* ===== BUSINESS TYPE GRID (Emoji Cards) ===== */
+    .business-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    
+    .business-card {
+      position: relative;
+      padding: 14px 12px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    
+    .business-card:hover {
+      border-color: var(--primary);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+    
+    .business-card.selected {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.15);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+    
+    .business-card .emoji {
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+    
+    .business-card .check {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 20px; height: 20px;
+      background: var(--success);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.7rem;
+      color: white;
+      opacity: 0;
+      transition: var(--transition);
+    }
+    
+    .business-card.selected .check {
+      opacity: 1;
+    }
+
+    /* ===== TOGGLE SWITCH ===== */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .toggle-group:hover {
+      border-color: var(--primary);
+    }
+    
+    .toggle {
+      width: 44px; height: 24px;
+      background: var(--border);
+      border-radius: 12px;
+      position: relative;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+    
+    .toggle-group.active .toggle {
+      background: var(--primary);
+    }
+    
+    .toggle-group.active .toggle::after {
+      transform: translateX(20px);
+    }
+    
+    .toggle-label {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    /* ===== PLAN CARDS ===== */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    
+    .plan-card {
+      padding: 20px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    
+    .plan-card:hover,
+    .plan-card.selected {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px var(--primary-glow);
+    }
+    
+    .plan-card.recommended {
+      border-color: var(--warning);
+    }
+    
+    .plan-card.recommended::before {
+      content: 'RECOMANDAT';
+      position: absolute;
+      top: -10px; right: 16px;
+      background: var(--warning);
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    
+    .plan-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+    
+    .plan-price {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-family: var(--font-mono);
+    }
+    
+    .plan-price span {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+    
+    .plan-features {
+      list-style: none;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .plan-features li {
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .plan-features li::before {
+      content: '✓';
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    /* ===== AGENT SELECTOR ===== */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    
+    .agent-card {
+      padding: 14px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+    
+    .agent-card:hover,
+    .agent-card.selected {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.15);
+    }
+    
+    .agent-card .icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    .agent-card .name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    
+    .agent-card .desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+      filter: brightness(1.05);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      box-shadow: none;
+    }
+    
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: var(--primary);
+    }
+    
+    .btn-full {
+      width: 100%;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+
+    /* ===== SPARKLE EFFECT (AI Magic) ===== */
+    .sparkle-btn {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sparkle-btn::after {
+      content: '✨';
+      position: absolute;
+      right: 12px;
+      animation: float 2s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* ===== FILE GENERATION SECTION ===== */
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .file-card {
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    
+    .file-icon {
+      width: 36px; height: 36px;
+      background: var(--gradient-primary);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    
+    .file-name {
+      font-weight: 500;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .file-status {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    
+    .file-status.pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+    
+    .file-status.generated {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+    
+    .btn-generate {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      background: var(--primary);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .btn-generate:hover {
+      background: var(--primary-hover);
+    }
+
+    /* ===== LIVE STATUS PANEL ===== */
+    .status-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-top: 24px;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .status-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 10px; height: 10px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+    
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+    }
+    
+    .status-item .label {
+      color: var(--text-secondary);
+    }
+    
+    .status-item .value {
+      font-weight: 500;
+      font-family: var(--font-mono);
+    }
+    
+    .status-item.success .value { color: var(--success); }
+    .status-item.warning .value { color: var(--warning); }
+
+    /* ===== TOAST NOTIFICATIONS ===== */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .toast {
+      padding: 14px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+      max-width: 360px;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--error); }
+    .toast.warning { border-left-color: var(--warning); }
+    
+    .toast-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .toast.success .toast-icon { color: var(--success); }
+    .toast.error .toast-icon { color: var(--error); }
+    .toast.warning .toast-icon { color: var(--warning); }
+    
+    .toast-message {
+      font-size: 0.95rem;
+      flex: 1;
+    }
+    
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
+    
+    .toast-close:hover { color: var(--text-primary); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .container { padding: 16px 12px 32px; }
+      
+      header h1 { font-size: 1.3rem; }
+      header p { font-size: 0.9rem; }
+      
+      .business-grid,
+      .agent-grid,
+      .file-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+      
+      .btn-group {
+        flex-direction: column-reverse;
+      }
+      
+      .btn { width: 100%; }
+    }
+
+    /* ===== UTILITIES ===== */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .mt-2 { margin-top: 8px; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-4 { margin-bottom: 16px; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-2 { gap: 8px; }
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+    .font-mono { font-family: var(--font-mono); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- ===== HEADER ===== -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🤖</div>
+        <h1>AgentulMeu.online</h1>
+      </div>
+      <p>Configurează-ți echipa de agenți AI în 9 pași simpli</p>
+    </header>
+
+    <!-- ===== PROGRESS ===== -->
+    <div class="progress-container">
+      <div class="progress-header">
+        <span class="progress-label">Progres configurare</span>
+        <span class="progress-percent" id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- ===== STEP NAVIGATION ===== -->
+    <div class="steps-nav" id="stepsNav">
+      <div class="step-indicator active" data-step="1">01 — Profil</div>
+      <div class="step-indicator" data-step="2">02 — Identitate</div>
+      <div class="step-indicator" data-step="3">03 — Obiective</div>
+      <div class="step-indicator" data-step="4">04 — Agenți</div>
+      <div class="step-indicator" data-step="5">05 — Canale</div>
+      <div class="step-indicator" data-step="6">06 — Personalitate</div>
+      <div class="step-indicator" data-step="7">07 — Tehnic</div>
+      <div class="step-indicator" data-step="8">08 — Generare</div>
+      <div class="step-indicator" data-step="9">09 — Export</div>
+    </div>
+
+    <!-- ===== FORM STEPS ===== -->
+    <form id="configForm">
+      
+      <!-- STEP 1: Profil Business -->
+      <div class="form-card step" data-step="1">
+        <h2><span class="step-num">1</span> Profilul business-ului</h2>
+        <p>Selectează tipul de business. Configurarea va fi adaptată automat.</p>
+        
+        <div class="form-group">
+          <label>Modelul de business <span class="required">*</span></label>
+          <small>Selectează toate variantele care se aplică</small>
+          <div class="business-grid" id="businessTypes">
+            <div class="business-card" data-value="b2c_local">
+              <span class="emoji">🏪</span>
+              <span>B2C Local</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="b2b">
+              <span class="emoji">🏢</span>
+              <span>B2B</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="ecommerce">
+              <span class="emoji">🌐</span>
+              <span>E-commerce</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="education">
+              <span class="emoji">🎓</span>
+              <span>Educație</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="saas">
+              <span class="emoji">💻</span>
+              <span>SaaS / Tech</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="rd">
+              <span class="emoji">🔬</span>
+              <span>R&D / Inovație</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="construction">
+              <span class="emoji">🏗️</span>
+              <span>Construcții</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="medical">
+              <span class="emoji">🏥</span>
+              <span>Medical</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="horeca">
+              <span class="emoji">🍽️</span>
+              <span>HoReCa</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="realestate">
+              <span class="emoji">🏠</span>
+              <span>Imobiliare</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="consulting">
+              <span class="emoji">⚖️</span>
+              <span>Consultanță</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="creative">
+              <span class="emoji">🎨</span>
+              <span>Creativ / Agenție</span>
+              <span class="check">✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Dimensiunea echipei</label>
+          <select id="teamSize">
+            <option value="">Selectează...</option>
+            <option value="solo">Solo / Freelancer</option>
+            <option value="small">2-10 persoane</option>
+            <option value="medium">11-50 persoane</option>
+            <option value="large">50+ persoane</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Stadiul de maturitate</label>
+          <select id="maturity">
+            <option value="">Selectează...</option>
+            <option value="idea">Idee / Pre-launch</option>
+            <option value="startup">Startup timpuriu</option>
+            <option value="growth">Creștere / Scaling</option>
+            <option value="established">Stabilit / Enterprise</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STEP 2: Identitate -->
+      <div class="form-card step hidden" data-step="2">
+        <h2><span class="step-num">2</span> Identitate & context</h2>
+        <p>Informațiile de bază pentru ca agentul să înțeleagă business-ul tău.</p>
+        
+        <div class="form-group">
+          <label>Numele business-ului / brandului <span class="required">*</span></label>
+          <input type="text" id="businessName" placeholder="ex: NeoTerm.ro" required />
+        </div>
+
+        <div class="form-group">
+          <label>Ce face business-ul — în 2 propoziții <span class="required">*</span></label>
+          <textarea id="businessDesc" placeholder="ex: Instalăm izolație celulozică ISOGREEN în case noi și renovate din Oltenia..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Produse / servicii principale (cu prețuri)</label>
+          <textarea id="products" placeholder="ex: — Izolație celulozică 55-60 kg/m3 — 80 lei/mp"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Clientul ideal</label>
+          <textarea id="idealClient" placeholder="ex: Proprietari case noi în construcție, 35–55 ani..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Zona geografică / piața acoperită</label>
+          <input type="text" id="region" placeholder="ex: Dolj, Olt, Gorj — sau național" />
+        </div>
+
+        <div class="form-group">
+          <label>Website / social media principale</label>
+          <input type="url" id="website" placeholder="ex: neoterm.ro · facebook.com/neoterm" />
+        </div>
+
+        <div class="form-group">
+          <label>Modelul de venit</label>
+          <select id="revenueModel">
+            <option value="">Selectează...</option>
+            <option value="product">Vânzare produse</option>
+            <option value="service">Servicii / Proiecte</option>
+            <option value="subscription">Abonament / SaaS</option>
+            <option value="commission">Comision / Marketplace</option>
+            <option value="hybrid">Mixt</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STEP 3: Obiective -->
+      <div class="form-card step hidden" data-step="3">
+        <h2><span class="step-num">3</span> Obiective & probleme</h2>
+        <p>Ce vrei să rezolvi cu AI? Selectează prioritățile tale.</p>
+        
+        <div class="form-group">
+          <label>Obiectivul principal</label>
+          <div class="business-grid" id="goals">
+            <div class="business-card" data-value="leads">
+              <span class="emoji">🎯</span>
+              <span>Lead-uri</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="sales">
+              <span class="emoji">📈</span>
+              <span>Vânzări</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="automation">
+              <span class="emoji">⚙️</span>
+              <span>Automatizare</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="content">
+              <span class="emoji">📢</span>
+              <span>Conținut</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="support">
+              <span class="emoji">🤝</span>
+              <span>Suport clienți</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="analytics">
+              <span class="emoji">📊</span>
+              <span>Analytics</span>
+              <span class="check">✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Problema #1 acum <span class="required">*</span></label>
+          <textarea id="topProblem" placeholder="ex: Pierd 3–4 ore pe zi răspunzând la întrebări repetitive..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Task-uri repetitive săptămânale</label>
+          <textarea id="repetitiveTasks" placeholder="ex: Verificarea stocului, trimiterea de facturi proforme..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Timp pierdut pe săptămână (ore)</label>
+          <input type="number" id="timeLost" min="0" max="168" placeholder="ex: 12" />
+        </div>
+
+        <div class="form-group">
+          <label>Prioritate următoarele 90 de zile</label>
+          <input type="text" id="priority90" placeholder="ex: Automatizarea fluxului de proforme" />
+        </div>
+      </div>
+
+      <!-- STEP 4: Agenți -->
+      <div class="form-card step hidden" data-step="4">
+        <h2><span class="step-num">4</span> Echipa de agenți</h2>
+        <p>Selectează agenții pe care vrei să-i activezi pentru business-ul tău.</p>
+        
+        <div class="form-group">
+          <label>Agenți de execuție</label>
+          <div class="agent-grid" id="executionAgents">
+            <div class="agent-card" data-agent="hunter">
+              <span class="icon">🎯</span>
+              <div class="name">HUNTER</div>
+              <div class="desc">Lead Generation</div>
+            </div>
+            <div class="agent-card" data-agent="writer">
+              <span class="icon">✍️</span>
+              <div class="name">WRITER</div>
+              <div class="desc">Conținut & Copy</div>
+            </div>
+            <div class="agent-card" data-agent="closer">
+              <span class="icon">📞</span>
+              <div class="name">CLOSER</div>
+              <div class="desc">Vânzări & Follow-up</div>
+            </div>
+            <div class="agent-card" data-agent="support">
+              <span class="icon">🛎️</span>
+              <div class="name">SUPPORT</div>
+              <div class="desc">Suport Clienți</div>
+            </div>
+            <div class="agent-card" data-agent="analyst">
+              <span class="icon">📊</span>
+              <div class="name">ANALYST</div>
+              <div class="desc">KPI & Rapoarte</div>
+            </div>
+            <div class="agent-card" data-agent="scout">
+              <span class="icon">🔭</span>
+              <div class="name">SCOUT</div>
+              <div class="desc">Market Research</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Agenți specializați</label>
+          <div class="agent-grid" id="specializedAgents">
+            <div class="agent-card" data-agent="scheduler">
+              <span class="icon">🗓️</span>
+              <div class="name">SCHEDULER</div>
+              <div class="desc">Programări</div>
+            </div>
+            <div class="agent-card" data-agent="finance">
+              <span class="icon">🧾</span>
+              <div class="name">FINANCE</div>
+              <div class="desc">Facturi & Plăți</div>
+            </div>
+            <div class="agent-card" data-agent="ops">
+              <span class="icon">📦</span>
+              <div class="name">OPS</div>
+              <div class="desc">Comenzi & Stocuri</div>
+            </div>
+            <div class="agent-card" data-agent="trainer">
+              <span class="icon">🎓</span>
+              <div class="name">TRAINER</div>
+              <div class="desc">Onboarding</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Canale -->
+      <div class="form-card step hidden" data-step="5">
+        <h2><span class="step-num">5</span> Canale & infrastructură</h2>
+        <p>Unde operezi și ce tool-uri folosești?</p>
+        
+        <div class="form-group">
+          <label>Canale de comunicare</label>
+          <div class="business-grid" id="channels">
+            <div class="business-card" data-value="telegram">
+              <span class="emoji">✈️</span>
+              <span>Telegram</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="whatsapp">
+              <span class="emoji">💬</span>
+              <span>WhatsApp</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="email">
+              <span class="emoji">📧</span>
+              <span>Email</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="facebook">
+              <span class="emoji">📘</span>
+              <span>Facebook</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="instagram">
+              <span class="emoji">📸</span>
+              <span>Instagram</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="website">
+              <span class="emoji">🌐</span>
+              <span>Website Chat</span>
+              <span class="check">✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>CRM actual / Tool-uri de gestiune</label>
+          <input type="text" id="currentCrm" placeholder="ex: HubSpot, Google Sheets, Trello..." />
+        </div>
+
+        <div class="form-group">
+          <label>Tool-uri & integrări dorite</label>
+          <input type="text" id="desiredIntegrations" placeholder="ex: Make.com, Zapier, Google Calendar..." />
+        </div>
+
+        <div class="form-group">
+          <label>Buget lunar estimat pentru AI ($)</label>
+          <input type="number" id="aiBudget" min="0" placeholder="ex: 50" />
+        </div>
+      </div>
+
+      <!-- STEP 6: Personalitate -->
+      <div class="form-card step hidden" data-step="6">
+        <h2><span class="step-num">6</span> Personalitate & reguli</h2>
+        <p>Cum vrei să se comporte agenții tăi?</p>
+        
+        <div class="form-group">
+          <label>Nivel de autonomie</label>
+          <div class="toggle-group" id="autonomy-approve" data-value="approve">
+            <div class="toggle"></div>
+            <span class="toggle-label">✋ Aprobare pentru orice</span>
+          </div>
+          <div class="toggle-group active" id="autonomy-semi" data-value="semi">
+            <div class="toggle"></div>
+            <span class="toggle-label">⚡ Semi-autonom (recomandat)</span>
+          </div>
+          <div class="toggle-group" id="autonomy-full" data-value="full">
+            <div class="toggle"></div>
+            <span class="toggle-label">🤖 Full autonom</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Identitate verbală</label>
+          <select id="brandVoice">
+            <option value="professional">Profesional & clar</option>
+            <option value="friendly" selected>Prietenos & accesibil</option>
+            <option value="expert">Expert & tehnic</option>
+            <option value="playful">Jucăuș & creativ</option>
+            <option value="luxury">Premium & sofisticat</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Avantaj competitiv real (USP)</label>
+          <textarea id="usp" placeholder="De ce ar alege cineva brandul tău și nu pe altcineva?"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Linii roșii absolute (Reguli SOUL.md)</label>
+          <textarea id="redLines" placeholder="ex: Nu vorbi niciodată despre politică, nu oferi discount mai mare de 10%..."></textarea>
+          <small>Separă regulile cu virgulă sau newline</small>
+        </div>
+      </div>
+
+      <!-- STEP 7: Context tehnic -->
+      <div class="form-card step hidden" data-step="7">
+        <h2><span class="step-num">7</span> Context tehnic</h2>
+        <p>Cât de confortabil ești cu tehnologia?</p>
+        
+        <div class="form-group">
+          <label>Nivel experiență AI</label>
+          <div class="business-grid">
+            <div class="business-card selected" data-value="beginner">
+              <span class="emoji">🌱</span>
+              <span>Începător</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="intermediate">
+              <span class="emoji">⚙️</span>
+              <span>Intermediar</span>
+              <span class="check">✓</span>
+            </div>
+            <div class="business-card" data-value="advanced">
+              <span class="emoji">🚀</span>
+              <span>Avansat</span>
+              <span class="check">✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Implicare în setup</label>
+          <div class="toggle-group active" id="involvement-collab" data-value="collab">
+            <div class="toggle"></div>
+            <span class="toggle-label">🤝 Colaborare (recomandat)</span>
+          </div>
+          <div class="toggle-group" id="involvement-independent" data-value="independent">
+            <div class="toggle"></div>
+            <span class="toggle-label">🙋 Independent</span>
+          </div>
+          <div class="toggle-group" id="involvement-dfy" data-value="dfy">
+            <div class="toggle"></div>
+            <span class="toggle-label">🎁 Done-for-you</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Deadline lansare / Urgență</label>
+          <input type="text" id="deadline" placeholder="ex: În 2 săptămâni / ASAP" />
+        </div>
+      </div>
+
+      <!-- STEP 8: Generare -->
+      <div class="form-card step hidden" data-step="8">
+        <h2><span class="step-num">8</span> Generare Agenți</h2>
+        <p>Sistemul a captat toate informațiile tale. Generează fișierele pentru framework-ul Hermes Agent.</p>
+        
+        <div class="form-group">
+          <label>Fișiere de generat</label>
+          <div class="file-grid" id="fileList">
+            <div class="file-card" data-file="SOUL.md">
+              <div class="file-info">
+                <div class="file-icon">🧬</div>
+                <span class="file-name">SOUL.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('SOUL.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="IDENTITY.md">
+              <div class="file-info">
+                <div class="file-icon">🪪</div>
+                <span class="file-name">IDENTITY.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('IDENTITY.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="RULES.md">
+              <div class="file-info">
+                <div class="file-icon">⚖️</div>
+                <span class="file-name">RULES.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('RULES.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="KNOWLEDGE.md">
+              <div class="file-info">
+                <div class="file-icon">📚</div>
+                <span class="file-name">KNOWLEDGE.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('KNOWLEDGE.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="TOOLS.md">
+              <div class="file-info">
+                <div class="file-icon">🔧</div>
+                <span class="file-name">TOOLS.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('TOOLS.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="WORKFLOWS.md">
+              <div class="file-info">
+                <div class="file-icon">📈</div>
+                <span class="file-name">WORKFLOWS.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('WORKFLOWS.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="MEMORY.md">
+              <div class="file-info">
+                <div class="file-icon">🧠</div>
+                <span class="file-name">MEMORY.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('MEMORY.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="VOICE.md">
+              <div class="file-info">
+                <div class="file-icon">🎤</div>
+                <span class="file-name">VOICE.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('VOICE.md')">⚡ Generează</button>
+            </div>
+            <div class="file-card" data-file="INTEGRATION.md">
+              <div class="file-info">
+                <div class="file-icon">🔗</div>
+                <span class="file-name">INTEGRATION.md</span>
+              </div>
+              <span class="file-status pending">Negenerat</span>
+              <button class="btn-generate" onclick="generateFile('INTEGRATION.md')">⚡ Generează</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-full sparkle-btn" onclick="generateAllFiles()">
+          ✨ Generează Toți Agenții
+        </button>
+      </div>
+
+      <!-- STEP 9: Export -->
+      <div class="form-card step hidden" data-step="9">
+        <h2><span class="step-num">9</span> Rezultate & Export</h2>
+        <p>Biblioteca ta de Agenți — descarcă și folosește în Hermes Agent.</p>
+        
+        <div class="status-panel">
+          <div class="status-header">
+            <span class="status-title">
+              <span class="status-dot"></span>
+              Status Generare
+            </span>
+            <span class="font-mono" id="generatedCount">0/9 fișiere</span>
+          </div>
+          <div class="status-list" id="statusList">
+            <div class="status-item">
+              <span class="label">Hermes Agent Connection</span>
+              <span class="value success">● Online</span>
+            </div>
+            <div class="status-item">
+              <span class="label">Ollama Backend</span>
+              <span class="value success">● Ready</span>
+            </div>
+            <div class="status-item">
+              <span class="label">Skill: build_business_agents</span>
+              <span class="value success">● Loaded</span>
+            </div>
+            <div class="status-item">
+              <span class="label">Telegram Gateway</span>
+              <span class="value warning">● Not configured</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mt-4">
+          <label>Acțiuni finale</label>
+          <div class="flex gap-2" style="flex-wrap: wrap;">
+            <button type="button" class="btn" onclick="downloadProfile()">
+              📥 Descarcă profile.json
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="copyHermesCommand()">
+              📋 Copiază comanda Hermes
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="openTelegramSetup()">
+              ✈️ Setup Telegram
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group mt-4">
+          <label>Comandă Hermes Agent (copiază și rulează în terminal)</label>
+          <textarea id="hermesCommand" readonly class="font-mono" style="background: var(--bg-secondary); font-size: 0.85rem;">
+hermes run skill=build_business_agents --arg profile_path="~/.hermes/profiles/neoterm.json"
+          </textarea>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="btn-group">
+        <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)" disabled>
+          ← Înapoi
+        </button>
+        <button type="button" class="btn" id="nextBtn" onclick="changeStep(1)">
+          Continuă →
+        </button>
+        <button type="submit" class="btn sparkle-btn hidden" id="submitBtn">
+          🚀 Lansează Agenții
+        </button>
+      </div>
+    </form>
+
+    <!-- ===== LIVE STATUS PANEL ===== -->
+    <div class="status-panel">
+      <div class="status-header">
+        <span class="status-title">
+          <span class="status-dot"></span>
+          Activitate Live
+        </span>
+        <span class="text-muted text-sm">Actualizat acum</span>
+      </div>
+      <div class="status-list">
+        <div class="status-item">
+          <span class="label">Sistem</span>
+          <span class="value success">● Operational</span>
+        </div>
+        <div class="status-item">
+          <span class="label">API Health</span>
+          <span class="value success">● Passed</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Agent Engine</span>
+          <span class="value success">● Ready</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Business-uri configurate</span>
+          <span class="value font-mono" id="businessCount">0</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    // ===== STATE MANAGEMENT =====
+    const state = {
+      currentStep: 1,
+      totalSteps: 9,
+      formData: {},
+      generatedFiles: [],
+      businessCount: 0
+    };
+
+    // ===== DOM ELEMENTS =====
+    const form = document.getElementById('configForm');
+    const steps = document.querySelectorAll('.step');
+    const stepIndicators = document.querySelectorAll('.step-indicator');
+    const progressFill = document.getElementById('progressFill');
+    const progressPercent = document.getElementById('progressPercent');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+      initBusinessTypeSelection();
+      initAgentSelection();
+      initToggleGroups();
+      initStepNavigation();
+      loadSavedProgress();
+      updateProgress();
+    });
+
+    // ===== BUSINESS TYPE SELECTION =====
+    function initBusinessTypeSelection() {
+      document.querySelectorAll('.business-card').forEach(card => {
+        card.addEventListener('click', function() {
+          this.classList.toggle('selected');
+          collectFormData();
+        });
+      });
+    }
+
+    // ===== AGENT SELECTION =====
+    function initAgentSelection() {
+      document.querySelectorAll('.agent-card').forEach(card => {
+        card.addEventListener('click', function() {
+          this.classList.toggle('selected');
+          collectFormData();
+        });
+      });
+    }
+
+    // ===== TOGGLE GROUPS =====
+    function initToggleGroups() {
+      document.querySelectorAll('.toggle-group').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+          // Remove active from siblings
+          const siblings = this.parentElement.querySelectorAll('.toggle-group');
+          siblings.forEach(sib => sib.classList.remove('active'));
+          // Add active to clicked
+          this.classList.add('active');
+          collectFormData();
+        });
+      });
+    }
+
+    // ===== STEP NAVIGATION =====
+    function initStepNavigation() {
+      stepIndicators.forEach(indicator => {
+        indicator.addEventListener('click', function() {
+          const step = parseInt(this.dataset.step);
+          if (step <= state.currentStep + 1) {
+            goToStep(step);
+          }
+        });
+      });
+
+      // Form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleSubmit();
+      });
+    }
+
+    // ===== NAVIGATION FUNCTIONS =====
+    function changeStep(direction) {
+      const newStep = state.currentStep + direction;
+      if (newStep >= 1 && newStep <= state.totalSteps) {
+        goToStep(newStep);
+      }
+    }
+
+    function goToStep(step) {
+      // Validate current step before moving forward
+      if (direction > 0 && !validateStep(state.currentStep)) {
+        showToast('Completes câmpurile obligatorii pentru a continua', 'error');
+        return;
+      }
+
+      // Hide all steps
+      steps.forEach(s => s.classList.add('hidden'));
+      // Show target step
+      document.querySelector(`.step[data-step="${step}"]`).classList.remove('hidden');
+      
+      // Update indicators
+      stepIndicators.forEach((ind, idx) => {
+        ind.classList.remove('active', 'completed');
+        if (idx + 1 === step) ind.classList.add('active');
+        if (idx + 1 < step) ind.classList.add('completed');
+      });
+
+      // Update buttons
+      prevBtn.disabled = step === 1;
+      
+      if (step === state.totalSteps) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+
+      state.currentStep = step;
+      updateProgress();
+      collectFormData();
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===== PROGRESS UPDATE =====
+    function updateProgress() {
+      const percent = Math.round((state.currentStep / state.totalSteps) * 100);
+      progressFill.style.width = `${percent}%`;
+      progressPercent.textContent = `${percent}%`;
+    }
+
+    // ===== FORM DATA COLLECTION =====
+    function collectFormData() {
+      state.formData = {
+        business: {
+          types: getSelectedValues('.business-grid .business-card.selected'),
+          name: document.getElementById('businessName')?.value,
+          description: document.getElementById('businessDesc')?.value,
+          products: document.getElementById('products')?.value,
+          idealClient: document.getElementById('idealClient')?.value,
+          region: document.getElementById('region')?.value,
+          website: document.getElementById('website')?.value,
+          teamSize: document.getElementById('teamSize')?.value,
+          maturity: document.getElementById('maturity')?.value,
+          revenueModel: document.getElementById('revenueModel')?.value
+        },
+        goals: {
+          primary: getSelectedValues('#goals .business-card.selected'),
+          topProblem: document.getElementById('topProblem')?.value,
+          repetitiveTasks: document.getElementById('repetitiveTasks')?.value,
+          timeLost: document.getElementById('timeLost')?.value,
+          priority90days: document.getElementById('priority90')?.value
+        },
+        agents: {
+          execution: getSelectedValues('#executionAgents .agent-card.selected', 'data-agent'),
+          specialized: getSelectedValues('#specializedAgents .agent-card.selected', 'data-agent')
+        },
+        channels: {
+          communication: getSelectedValues('#channels .business-card.selected'),
+          crm: document.getElementById('currentCrm')?.value,
+          integrations: document.getElementById('desiredIntegrations')?.value,
+          aiBudget: document.getElementById('aiBudget')?.value
+        },
+        personality: {
+          autonomy: document.querySelector('.toggle-group.active')?.dataset.value,
+          voice: document.getElementById('brandVoice')?.value,
+          usp: document.getElementById('usp')?.value,
+          redLines: document.getElementById('redLines')?.value?.split(/[\n,]+/).filter(s => s.trim())
+        },
+        tech: {
+          aiLevel: document.querySelector('[data-step="7"] .business-card.selected')?.dataset.value,
+          involvement: document.querySelector('#involvement-collab.active, #involvement-independent.active, #involvement-dfy.active')?.dataset.value,
+          deadline: document.getElementById('deadline')?.value
+        }
+      };
+      
+      // Auto-save to localStorage
+      localStorage.setItem('agentulmeu_profile', JSON.stringify(state.formData));
+    }
+
+    function getSelectedValues(selector, attr = 'data-value') {
+      return Array.from(document.querySelectorAll(selector))
+        .map(el => el.getAttribute(attr))
+        .filter(v => v);
+    }
+
+    // ===== VALIDATION =====
+    function validateStep(step) {
+      const currentStepEl = document.querySelector(`.step[data-step="${step}"]`);
+      const required = currentStepEl.querySelectorAll('[required]');
+      
+      for (const field of required) {
+        if (!field.value.trim()) {
+          field.style.borderColor = 'var(--error)';
+          field.addEventListener('input', function() {
+            this.style.borderColor = '';
+          }, { once: true });
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // ===== FILE GENERATION (Simulated for Demo) =====
+    async function generateFile(filename) {
+      const card = document.querySelector(`.file-card[data-file="${filename}"]`);
+      const status = card.querySelector('.file-status');
+      const btn = card.querySelector('.btn-generate');
+      
+      // Show loading
+      btn.disabled = true;
+      btn.innerHTML = '⏳...';
+      
+      // Simulate API call to Hermes Agent
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+      
+      // Update UI
+      status.textContent = 'Generat';
+      status.className = 'file-status generated';
+      btn.innerHTML = '✓';
+      btn.disabled = true;
+      
+      if (!state.generatedFiles.includes(filename)) {
+        state.generatedFiles.push(filename);
+        updateGeneratedCount();
+      }
+      
+      showToast(`✅ ${filename} generat cu succes!`, 'success');
+      collectFormData();
+    }
+
+    async function generateAllFiles() {
+      const files = Array.from(document.querySelectorAll('.file-card'));
+      
+      for (const file of files) {
+        const filename = file.dataset.file;
+        if (!state.generatedFiles.includes(filename)) {
+          await generateFile(filename);
+        }
+      }
+      
+      showToast('🎉 Toți agenții au fost generați! Poți exporta acum.', 'success');
+    }
+
+    function updateGeneratedCount() {
+      document.getElementById('generatedCount').textContent = 
+        `${state.generatedFiles.length}/9 fișiere`;
+    }
+
+    // ===== EXPORT FUNCTIONS =====
+    function downloadProfile() {
+      collectFormData();
+      const blob = new Blob([JSON.stringify(state.formData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `profile_${(state.formData.business?.name || 'business').toLowerCase().replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📥 profile.json descărcat!', 'success');
+    }
+
+    function copyHermesCommand() {
+      const cmd = document.getElementById('hermesCommand').value.trim();
+      navigator.clipboard.writeText(cmd).then(() => {
+        showToast('📋 Comanda copiată în clipboard!', 'success');
+      });
+    }
+
+    function openTelegramSetup() {
+      showToast('🔗 Redirecționare către setup Telegram...', 'info');
+      // In production: window.location.href = '/gateway/setup?platform=telegram';
+      setTimeout(() => {
+        showToast('ℹ️ În producție, aceasta ar deschide wizard-ul de configurare Telegram', 'info');
+      }, 1500);
+    }
+
+    // ===== FORM SUBMISSION =====
+    async function handleSubmit() {
+      collectFormData();
+      
+      if (state.generatedFiles.length === 0) {
+        showToast('⚠️ Generează cel puțin un fișier înainte de lansare', 'warning');
+        goToStep(8);
+        return;
+      }
+
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '🚀 Se lansează...';
+      
+      try {
+        // In production: Call Hermes Agent API
+        // const response = await fetch('/api/hermes/run', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     skill: 'build_business_agents',
+        //     args: { profile_path: '~/.hermes/profiles/...' }
+        //   })
+        // });
+        
+        // Simulate success
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        state.businessCount++;
+        document.getElementById('businessCount').textContent = state.businessCount;
+        
+        showToast('🎉 Agenții tăi au fost lansați cu succes!', 'success');
+        
+        // Reset form after delay
+        setTimeout(() => {
+          if (confirm('Vrei să configurezi un alt business?')) {
+            resetForm();
+          }
+        }, 3000);
+        
+      } catch (error) {
+        showToast('❌ Eroare la lansare: ' + error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '🚀 Lansează Agenții';
+      }
+    }
+
+    function resetForm() {
+      form.reset();
+      document.querySelectorAll('.business-card.selected, .agent-card.selected')
+        .forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.file-status.generated').forEach(el => {
+        el.textContent = 'Negenerat';
+        el.className = 'file-status pending';
+      });
+      document.querySelectorAll('.btn-generate').forEach(btn => {
+        btn.disabled = false;
+        btn.innerHTML = '⚡ Generează';
+      });
+      state.generatedFiles = [];
+      updateGeneratedCount();
+      goToStep(1);
+    }
+
+    // ===== TOAST NOTIFICATIONS =====
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+      
+      toast.innerHTML = `
+        <span class="toast-icon">${icons[type]}</span>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
+
+    // ===== LOCAL STORAGE =====
+    function loadSavedProgress() {
+      const saved = localStorage.getItem('agentulmeu_profile');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          // Could pre-fill form fields here if needed
+          console.log('📦 Profil încărcat din localStorage', data);
+        } catch (e) {
+          console.warn('⚠️ Nu s-a putut încărca profilul salvat', e);
+        }
+      }
+    }
+
+    // ===== UTILITY: Expose functions globally for inline handlers =====
+    window.generateFile = generateFile;
+    window.generateAllFiles = generateAllFiles;
+    window.downloadProfile = downloadProfile;
+    window.copyHermesCommand = copyHermesCommand;
+    window.openTelegramSetup = openTelegramSetup;
+  </script>
+</body>
+</html>
