@@ -76,25 +76,36 @@ hermes gateway logs --follow`,
 📊 Rezultatele vin înapoi în aceeași conversație`,
   },
   skills: {
-    title: 'Skill-ul Build Business Agents',
-    code: `🛠️ Descarcă skill-ul gata făcut:
-  → build_business_agents.SKILL.md
+    title: 'Skill Build Business Agents v2.0',
+    code: `🛠️ Skill-ul build_business_agents.SKILL.md
+   → Citește profil JSON → Generează 6 sub-agenți → Salvează .AGENT.md
 
-📋 Ce face:
-1. Citește profilul JSON din formularul de 9 pași
-2. Generează 4-6 sub-agenți: Hunter, Writer, Closer, Support, Analyst
-3. Salvează fișiere .AGENT.md în ~/.hermes/agents/{business_id}/
-4. Înregistrează agenții în memoria Hermes
-
-⚡ Comandă de utilizare:
-/build_business_agents profile="nume_business.json"
+📋 Structură Input JSON (formular 9 pași):
+  business: {name, type[], description, products, ideal_client, region}
+  goals: {primary[], top_problem, repetitive_tasks[], priority_90days}
+  agents_needed: ["hunter", "writer", "closer", "support", "analyst", "scout"]
+  personality: {voice, autonomy, red_lines[], usp}
+  channels: {communication[], crm, integrations[]}
 
 🎯 Agenții generați automat:
-• Hunter — Găsește și califică lead-uri
-• Writer — Generează conținut pentru marketing
-• Closer — Convertește lead-uri în clienți
-• Support — Răspunde la întrebări clienți
-• Analyst — Analizează metrici și oferă insight-uri`,
+  • HUNTER   — Identifică și califică lead-uri (grupuri, forumuri)
+  • WRITER   — Generează conținut persuasiv (blog, social, email)
+  • CLOSER   — Convertește lead-uri în vânzări (follow-up, oferte)
+  • SUPPORT  — Răspunde la întrebări clienți (<5 min, FAQ auto)
+  • ANALYST  — Insights din date (trenduri, recomandări acționabile)
+  • SCOUT    — Inteligență competitivă (prețuri, oportunități)
+
+⚡ Comenzi de utilizare:
+  /build_business_agents profile_path="~/.hermes/profiles/neoterm.json"
+  /run_agent neoterm_hunter "Găsește 5 firme în Craiova"
+  /memory_search agent=neoterm_writer query="email marketing"
+  /build_business_agents --regenerate hunter,writer
+
+🧪 Test automat post-generare:
+  hermes chat --agent neoterm_hunter --prompt "Salut, sunt client!" --timeout 30
+  # Verifică: română ✅ USP menționat ✅ red_lines respectate ✅ next-step ✅
+
+📦 Bonus: form_to_json.py — convertește răspunsuri formular → profile.json`,
   },
 }
 
@@ -222,8 +233,8 @@ export default function InstallSection() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
           {[
             { value: '1', label: 'Script de Instalare' },
-            { value: '4', label: 'Platforme Suportate' },
-            { value: '∞', label: 'Sub-Agenți Posibili' },
+            { value: '6', label: 'Tipuri de Sub-Agenți' },
+            { value: '∞', label: 'Business-uri Posibile' },
             { value: '0', label: 'Telemetry' },
           ].map((stat) => (
             <div key={stat.label} className="glass rounded-xl p-4 text-center">
