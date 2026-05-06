@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, UserPlus, Settings, Rocket, Sparkles } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -38,6 +40,7 @@ const steps = [
 ]
 
 export default function HowItWorks() {
+  const { isAuthenticated } = useAuth()
   const sectionRef = useRef<HTMLDivElement>(null)
   const stepsRef = useRef<(HTMLDivElement | null)[]>([])
   const lineRef = useRef<HTMLDivElement>(null)
@@ -176,13 +179,27 @@ export default function HowItWorks() {
 
         {/* CTA */}
         <div className="mt-20 text-center">
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-10 py-6 glow-cyan group"
-          >
-            Creează Primul Tău Agent
-            <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-          </Button>
+          {isAuthenticated ? (
+            <Link to="/agents/new">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-10 py-6 glow-cyan group"
+              >
+                Creează Primul Tău Agent
+                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-10 py-6 glow-cyan group"
+              >
+                Creează Primul Tău Agent
+                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          )}
           <p className="mt-4 text-sm text-white/40">Gratuit pentru totdeauna pentru primul agent</p>
         </div>
       </div>

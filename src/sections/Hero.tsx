@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
+import { Link, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Bot, Brain, Zap, MessageSquare } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 import gsap from 'gsap'
 
 export default function Hero() {
@@ -9,6 +11,8 @@ export default function Hero() {
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
   const cardsRef = useRef<HTMLDivElement>(null)
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -85,13 +89,26 @@ export default function Hero() {
           </p>
 
           <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-8 py-6 glow-cyan group"
-            >
-              Începe Gratuit
-              <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                size="lg"
+                onClick={() => navigate('/dashboard')}
+                className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-8 py-6 glow-cyan group"
+              >
+                Dashboard
+                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            ) : (
+              <Link to="/login">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-8 py-6 glow-cyan group"
+                >
+                  Începe Gratuit
+                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            )}
             <Button
               size="lg"
               variant="outline"
