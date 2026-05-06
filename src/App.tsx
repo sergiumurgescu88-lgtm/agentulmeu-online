@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import CreateAgent from './pages/CreateAgent'
 import ChatAgent from './pages/ChatAgent'
+import AgentsList from './pages/AgentsList'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/agents" element={<AgentsList />} />
       <Route path="/agents/new" element={<CreateAgent />} />
       <Route path="/agents/:agentId/chat" element={<ChatAgent />} />
       <Route path="*" element={<NotFound />} />

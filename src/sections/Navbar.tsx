@@ -18,6 +18,7 @@ export default function Navbar() {
     { label: 'Funcționalități', href: '#features' },
     { label: 'Instalare', href: '#install' },
     { label: 'Flux', href: '#flow' },
+    { label: 'Agenți', href: '/agents', isRoute: true },
     { label: 'Dashboard', href: '/dashboard', isRoute: true },
     { label: 'Contact', href: '#footer' },
   ]
