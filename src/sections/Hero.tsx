@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Bot, Brain, Zap, MessageSquare } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { ArrowRight, Bot, Brain, Zap, MessageSquare, Phone, Server, BookOpen, ExternalLink } from 'lucide-react'
 import gsap from 'gsap'
 
 export default function Hero() {
@@ -10,9 +8,6 @@ export default function Hero() {
   const titleRef = useRef<HTMLHeadingElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
-  const cardsRef = useRef<HTMLDivElement>(null)
-  const { isAuthenticated } = useAuth()
-  const navigate = useNavigate()
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -46,11 +41,18 @@ export default function Hero() {
     return () => ctx.revert()
   }, [])
 
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   const floatingCards = [
-    { icon: Brain, label: 'Învață', color: 'from-cyan-400/20 to-blue-500/20', delay: '0s' },
-    { icon: MessageSquare, label: 'Conversează', color: 'from-purple-400/20 to-pink-500/20', delay: '1.5s' },
-    { icon: Zap, label: 'Automatizează', color: 'from-amber-400/20 to-orange-500/20', delay: '3s' },
-    { icon: Bot, label: 'Creează', color: 'from-emerald-400/20 to-teal-500/20', delay: '4.5s' },
+    { icon: Phone, label: 'Telefon', sub: 'Telegram / WhatsApp', color: 'from-cyan-400/20 to-blue-500/20', delay: '0s' },
+    { icon: Server, label: 'WSL2 Server', sub: 'Self-hosted', color: 'from-purple-400/20 to-pink-500/20', delay: '1.5s' },
+    { icon: Brain, label: 'Memorie', sub: 'Persistentă', color: 'from-amber-400/20 to-orange-500/20', delay: '3s' },
+    { icon: Bot, label: 'Sub-Agenți', sub: 'Izolați & Specializați', color: 'from-emerald-400/20 to-teal-500/20', delay: '4.5s' },
   ]
 
   return (
@@ -68,54 +70,79 @@ export default function Hero() {
         <div className="text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-xs text-white/80 tracking-wide uppercase">AI Românesc Avansat</span>
+            <span className="text-xs text-white/80 tracking-wide uppercase">Hermes Agent by Nous Research</span>
           </div>
 
           <h1
             ref={titleRef}
             className="text-5xl md:text-7xl font-bold leading-tight mb-6"
           >
-            <span className="text-white">Agentul Tău</span>
+            <span className="text-white">Un Singur Agent.</span>
             <br />
-            <span className="text-gradient">Antigravitațional</span>
+            <span className="text-gradient">Toate Business-urile.</span>
           </h1>
 
           <p
             ref={subtitleRef}
             className="text-lg md:text-xl text-white/60 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
           >
-            Creează, antrenează și lansează agenți AI inteligenți care lucrează pentru tine
-            24/7. Fără cod. Fără limite. Doar rezultate.
+            Hermes Agent rulează pe serverul tău (WSL2), se conectează la Telegram, WhatsApp, 
+            Discord și Slack. Controlezi totul de pe telefon. Memorie persistentă, skill-uri automate, 
+            sub-agenți izolați pentru fiecare business.
           </p>
 
           <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            {isAuthenticated ? (
-              <Button
-                size="lg"
-                onClick={() => navigate('/dashboard')}
-                className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-8 py-6 glow-cyan group"
-              >
-                Dashboard
-                <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-            ) : (
-              <Link to="/login">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-8 py-6 glow-cyan group"
-                >
-                  Începe Gratuit
-                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            )}
+            {/* Primary CTA — scroll to Install section */}
+            <Button
+              size="lg"
+              onClick={() => scrollToSection('install')}
+              className="relative bg-gradient-to-r from-cyan-400 to-purple-500 text-white border-0 hover:opacity-90 text-lg px-8 py-6 glow-cyan group overflow-hidden"
+            >
+              <span className="relative z-10 flex items-center">
+                <ArrowRight className="mr-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                Instalează Hermes
+              </span>
+            </Button>
+
+            {/* Secondary CTA — scroll to Flow section */}
             <Button
               size="lg"
               variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 text-lg px-8 py-6"
+              onClick={() => scrollToSection('flow')}
+              className="border-white/20 text-white hover:bg-white/10 hover:border-white/40 text-lg px-8 py-6 group"
             >
-              Vezi Demo
+              <BookOpen className="mr-2 w-5 h-5 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+              Vezi Fluxul Complet
             </Button>
+          </div>
+
+          {/* Quick links row */}
+          <div className="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
+            <button
+              onClick={() => scrollToSection('features')}
+              className="text-xs text-white/40 hover:text-cyan-400 transition-colors flex items-center gap-1"
+            >
+              <Zap className="w-3 h-3" />
+              Funcționalități
+            </button>
+            <span className="text-white/20">|</span>
+            <button
+              onClick={() => scrollToSection('agents')}
+              className="text-xs text-white/40 hover:text-purple-400 transition-colors flex items-center gap-1"
+            >
+              <Brain className="w-3 h-3" />
+              Sub-Agenți
+            </button>
+            <span className="text-white/20">|</span>
+            <a
+              href="https://github.com/NousResearch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/40 hover:text-pink-400 transition-colors flex items-center gap-1"
+            >
+              <ExternalLink className="w-3 h-3" />
+              GitHub Nous Research
+            </a>
           </div>
 
           <div className="mt-10 flex items-center gap-6 justify-center lg:justify-start text-white/40 text-sm">
@@ -129,11 +156,11 @@ export default function Hero() {
                 </div>
               ))}
             </div>
-            <span>+2,500 utilizatori activi</span>
+            <span>MIT License • Zero Telemetry • Self-Hosted</span>
           </div>
         </div>
 
-        <div ref={cardsRef} className="relative h-[500px] hidden lg:block">
+        <div className="relative h-[500px] hidden lg:block">
           {floatingCards.map((card, index) => {
             const Icon = card.icon
             const positions = [
@@ -145,7 +172,7 @@ export default function Hero() {
             return (
               <div
                 key={card.label}
-                className={`hero-card absolute glass rounded-2xl p-5 w-44 animate-levitate glow-cyan`}
+                className={`hero-card absolute glass rounded-2xl p-5 w-48 animate-levitate glow-cyan`}
                 style={{
                   ...positions[index],
                   animationDelay: card.delay,
@@ -156,7 +183,7 @@ export default function Hero() {
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-white font-medium text-sm">{card.label}</p>
-                <p className="text-white/40 text-xs mt-1">Agent AI activ</p>
+                <p className="text-white/40 text-xs mt-1">{card.sub}</p>
               </div>
             )
           })}
@@ -166,7 +193,7 @@ export default function Hero() {
             <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/20 blur-xl animate-pulse-glow" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-32 h-32 rounded-2xl glass flex items-center justify-center animate-float">
-                <Bot className="w-16 h-16 text-cyan-400" />
+                <MessageSquare className="w-16 h-16 text-cyan-400" />
               </div>
             </div>
           </div>
