@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Copy, Check, Terminal, Settings, MessageSquare, Smartphone } from 'lucide-react'
+import { Copy, Check, Terminal, Settings, MessageSquare, Smartphone, Wrench, Download } from 'lucide-react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -11,6 +11,7 @@ const tabs = [
   { id: 'config', label: 'Configurare', icon: Settings },
   { id: 'gateway', label: 'Gateway', icon: MessageSquare },
   { id: 'phone', label: 'Telefon', icon: Smartphone },
+  { id: 'skills', label: 'Skill Builder', icon: Wrench },
 ]
 
 const codeBlocks: Record<string, { title: string; code: string }> = {
@@ -73,6 +74,27 @@ hermes gateway logs --follow`,
 /agents list
 
 📊 Rezultatele vin înapoi în aceeași conversație`,
+  },
+  skills: {
+    title: 'Skill-ul Build Business Agents',
+    code: `🛠️ Descarcă skill-ul gata făcut:
+  → build_business_agents.SKILL.md
+
+📋 Ce face:
+1. Citește profilul JSON din formularul de 9 pași
+2. Generează 4-6 sub-agenți: Hunter, Writer, Closer, Support, Analyst
+3. Salvează fișiere .AGENT.md în ~/.hermes/agents/{business_id}/
+4. Înregistrează agenții în memoria Hermes
+
+⚡ Comandă de utilizare:
+/build_business_agents profile="nume_business.json"
+
+🎯 Agenții generați automat:
+• Hunter — Găsește și califică lead-uri
+• Writer — Generează conținut pentru marketing
+• Closer — Convertește lead-uri în clienți
+• Support — Răspunde la întrebări clienți
+• Analyst — Analizează metrici și oferă insight-uri`,
   },
 }
 
@@ -165,15 +187,29 @@ export default function InstallSection() {
               </div>
               <span className="text-sm text-white/60 ml-3">{codeBlocks[activeTab].title}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={copyCode}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span className="ml-2">{copied ? 'Copiat!' : 'Copiază'}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyCode}
+                className="text-white/60 hover:text-white hover:bg-white/10"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                <span className="ml-2">{copied ? 'Copiat!' : 'Copiază'}</span>
+              </Button>
+              {activeTab === 'skills' && (
+                <a href="/build_business_agents.SKILL.md" download>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Descarcă .SKILL.md
+                  </Button>
+                </a>
+              )}
+            </div>
           </div>
           <div className="p-6 overflow-x-auto">
             <pre className="text-sm text-white/80 font-mono leading-relaxed whitespace-pre">
