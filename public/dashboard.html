@@ -1558,6 +1558,9 @@ hermes run skill=build_business_agents --arg profile_path="~/.hermes/profiles/ne
       initStepNavigation();
       loadSavedProgress();
       updateProgress();
+      checkHermesStatus();
+      // Refresh status la fiecare 30 secunde
+      setInterval(checkHermesStatus, 30000);
     });
 
     // ===== BUSINESS TYPE SELECTION =====
@@ -1737,50 +1740,112 @@ hermes run skill=build_business_agents --arg profile_path="~/.hermes/profiles/ne
       return true;
     }
 
-    // ===== FILE GENERATION (Simulated for Demo) =====
+    // ===== API CLIENT — Conectare la Flask Backend =====
+    const API_BASE = window.location.origin;
+
+    async function apiRequest(endpoint, method = 'GET', body = null) {
+      const options = {
+        method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+      if (body) options.body = JSON.stringify(body);
+      
+      try {
+        const response = await fetch(`${API_BASE}${endpoint}`, options);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'API request failed');
+        return data;
+      } catch (error) {
+        console.error(`API Error (${endpoint}):`, error);
+        showToast(`❌ Eroare: ${error.message}`, 'error');
+        throw error;
+      }
+    }
+
+    // ===== FILE GENERATION (Real API) =====
     async function generateFile(filename) {
       const card = document.querySelector(`.file-card[data-file="${filename}"]`);
       const status = card.querySelector('.file-status');
       const btn = card.querySelector('.btn-generate');
       
-      // Show loading
+      // UI loading state
       btn.disabled = true;
       btn.innerHTML = '⏳...';
+      status.textContent = 'Se generează...';
       
-      // Simulate API call to Hermes Agent
-      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
-      
-      // Update UI
-      status.textContent = 'Generat';
-      status.className = 'file-status generated';
-      btn.innerHTML = '✓';
-      btn.disabled = true;
-      
-      if (!state.generatedFiles.includes(filename)) {
-        state.generatedFiles.push(filename);
-        updateGeneratedCount();
+      try {
+        // 1. Salvează profilul dacă nu e deja salvat
+        const profile = await saveProfile();
+        if (!profile) throw new Error('Nu s-a putut salva profilul');
+        
+        // 2. Trigger generare prin API
+        const result = await apiRequest('/api/generate', 'POST', {
+          profile_filename: profile.filename,
+          files: [filename]
+        });
+        
+        if (result.success) {
+          status.textContent = 'Generat';
+          status.className = 'file-status generated';
+          btn.innerHTML = '✓';
+          
+          if (!state.generatedFiles.includes(filename)) {
+            state.generatedFiles.push(filename);
+            updateGeneratedCount();
+          }
+          
+          showToast(`✅ ${filename} generat cu succes!`, 'success');
+          return true;
+        } else {
+          throw new Error(result.error || 'Generare eșuată');
+        }
+        
+      } catch (error) {
+        status.textContent = 'Eroare';
+        status.className = 'file-status error';
+        btn.innerHTML = '↻';
+        btn.disabled = false;
+        showToast(`❌ Eroare la generare: ${error.message}`, 'error');
+        return false;
       }
-      
-      showToast(`✅ ${filename} generat cu succes!`, 'success');
-      collectFormData();
     }
 
     async function generateAllFiles() {
-      const files = Array.from(document.querySelectorAll('.file-card'));
+      const files = Array.from(document.querySelectorAll('.file-card[data-file]'))
+        .map(card => card.dataset.file)
+        .filter(f => !state.generatedFiles.includes(f));
       
-      for (const file of files) {
-        const filename = file.dataset.file;
-        if (!state.generatedFiles.includes(filename)) {
-          await generateFile(filename);
-        }
+      if (files.length === 0) {
+        showToast('ℹ️ Toate fișierele sunt deja generate', 'info');
+        return;
       }
       
-      showToast('🎉 Toți agenții au fost generați! Poți exporta acum.', 'success');
+      // Salvează profilul o singură dată
+      const profile = await saveProfile();
+      if (!profile) return;
+      
+      // Generează fiecare fișier secvențial
+      let successCount = 0;
+      for (const filename of files) {
+        const success = await generateFile(filename);
+        if (success) successCount++;
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      showToast(`🎉 ${successCount}/${files.length} fișiere generate!`, successCount === files.length ? 'success' : 'warning');
     }
 
-    function updateGeneratedCount() {
-      document.getElementById('generatedCount').textContent = 
-        `${state.generatedFiles.length}/9 fișiere`;
+    // ===== SALVARE PROFIL =====
+    async function saveProfile() {
+      collectFormData();
+      
+      const response = await apiRequest('/api/profile', 'POST', state.formData);
+      
+      if (response.success) {
+        showToast(`✅ Profil salvat: ${response.filename}`, 'success');
+        return response;
+      }
+      return null;
     }
 
     // ===== EXPORT FUNCTIONS =====
@@ -1796,16 +1861,30 @@ hermes run skill=build_business_agents --arg profile_path="~/.hermes/profiles/ne
       showToast('📥 profile.json descărcat!', 'success');
     }
 
-    function copyHermesCommand() {
-      const cmd = document.getElementById('hermesCommand').value.trim();
-      navigator.clipboard.writeText(cmd).then(() => {
-        showToast('📋 Comanda copiată în clipboard!', 'success');
-      });
+    async function copyHermesCommand() {
+      try {
+        const health = await apiRequest('/api/health');
+        const profiles = await apiRequest('/api/logs/recent?limit=5');
+        
+        const lastProfile = profiles.logs
+          .filter(log => log.event === 'PROFILE_SAVED')
+          .pop();
+        
+        const filename = lastProfile?.data?.filename || 'profile.json';
+        const cmd = `hermes run skill=build_business_agents --arg profile_path="${filename}"`;
+        
+        await navigator.clipboard.writeText(cmd);
+        showToast('📋 Comanda Hermes copiată în clipboard!', 'success');
+        
+      } catch (error) {
+        const cmd = 'hermes run skill=build_business_agents --arg profile_path="~/.hermes/profiles/your_profile.json"';
+        await navigator.clipboard.writeText(cmd);
+        showToast('📋 Comandă generică copiată (actualizează path-ul manual)', 'warning');
+      }
     }
 
     function openTelegramSetup() {
       showToast('🔗 Redirecționare către setup Telegram...', 'info');
-      // In production: window.location.href = '/gateway/setup?platform=telegram';
       setTimeout(() => {
         showToast('ℹ️ În producție, aceasta ar deschide wizard-ul de configurare Telegram', 'info');
       }, 1500);
@@ -1821,41 +1900,74 @@ hermes run skill=build_business_agents --arg profile_path="~/.hermes/profiles/ne
         return;
       }
 
-      // Show loading state
       submitBtn.disabled = true;
       submitBtn.innerHTML = '🚀 Se lansează...';
       
       try {
-        // In production: Call Hermes Agent API
-        // const response = await fetch('/api/hermes/run', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     skill: 'build_business_agents',
-        //     args: { profile_path: '~/.hermes/profiles/...' }
-        //   })
-        // });
+        // 1. Salvează profilul final
+        const profile = await saveProfile();
+        if (!profile) throw new Error('Nu s-a putut salva profilul');
         
-        // Simulate success
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // 2. Trigger generare finală (dacă mai sunt fișiere pending)
+        const pending = Array.from(document.querySelectorAll('.file-status.pending'))
+          .map(el => el.closest('.file-card')?.dataset.file)
+          .filter(Boolean);
         
+        if (pending.length > 0) {
+          await apiRequest('/api/generate', 'POST', {
+            profile_filename: profile.filename,
+            files: pending
+          });
+        }
+        
+        // 3. Actualizează contorul de business-uri
         state.businessCount++;
         document.getElementById('businessCount').textContent = state.businessCount;
         
         showToast('🎉 Agenții tăi au fost lansați cu succes!', 'success');
         
-        // Reset form after delay
+        // 4. Oferă opțiunea de a configura alt business
         setTimeout(() => {
           if (confirm('Vrei să configurezi un alt business?')) {
             resetForm();
+          } else {
+            showToast(`📁 Fișierele tale sunt în: output/OpenClaw/`, 'info');
           }
         }, 3000);
         
       } catch (error) {
-        showToast('❌ Eroare la lansare: ' + error.message, 'error');
+        showToast(`❌ Eroare la lansare: ${error.message}`, 'error');
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '🚀 Lansează Agenții';
+      }
+    }
+
+    // ===== VERIFICARE STATUS HERMES =====
+    async function checkHermesStatus() {
+      try {
+        const status = await apiRequest('/api/hermes/status');
+        
+        // Actualizează UI-ul din status panel
+        const items = document.querySelectorAll('.status-item');
+        items.forEach(item => {
+          const label = item.querySelector('.label')?.textContent;
+          const value = item.querySelector('.value');
+          
+          if (label?.includes('Hermes')) {
+            value.textContent = status.hermes_available ? '● Online' : '● Offline';
+            value.className = `value ${status.hermes_available ? 'success' : 'error'}`;
+          }
+          if (label?.includes('Ollama')) {
+            value.textContent = `● ${status.ollama_status}`;
+            value.className = `value ${status.ollama_status === 'connected' ? 'success' : 'warning'}`;
+          }
+        });
+        
+        return status;
+      } catch (error) {
+        console.warn('Nu s-a putut verifica statusul Hermes:', error);
+        return null;
       }
     }
 
