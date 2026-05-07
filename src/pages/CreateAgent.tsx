@@ -71,7 +71,40 @@ export default function CreateAgent() {
         },
       }
 
-      // Save to localStorage
+      // Try Flask API first
+      try {
+        // 1. Save profile
+        const profileRes = await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile),
+        })
+        const profileData = await profileRes.json()
+        
+        if (profileData.success) {
+          // 2. Generate agent files via Hermes
+          const generateRes = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              profile_filename: profileData.filename,
+              files: [`${agentType.toUpperCase()}.AGENT.md`],
+            }),
+          })
+          const generateData = await generateRes.json()
+          
+          if (generateData.success) {
+            showToast('🎉 Agent generat via Hermes!', 'success')
+          } else {
+            showToast(`⚠️ Profil salvat, dar generarea a eșuat: ${generateData.error || 'unknown'}`, 'warning')
+          }
+        }
+      } catch (apiErr) {
+        // Fallback: localStorage only
+        showToast('💾 API offline — salvat local', 'warning')
+      }
+
+      // Always save to localStorage for UI persistence
       const existing = JSON.parse(localStorage.getItem('agentulmeu_agents') || '[]')
       existing.push({
         id: `${profile.business.business_id}_${agentType}`,
@@ -82,22 +115,23 @@ export default function CreateAgent() {
       })
       localStorage.setItem('agentulmeu_agents', JSON.stringify(existing))
 
-      // Try API if available
-      try {
-        await fetch('/api/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(profile),
-        })
-      } catch { /* offline mode */ }
-
-      alert('🎉 Agent creat cu succes!')
       navigate('/agents')
     } catch (e) {
-      alert('❌ Eroare: ' + (e as Error).message)
+      showToast('❌ Eroare: ' + (e as Error).message, 'error')
     } finally {
       setSaving(false)
     }
+  }
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    // Simple toast implementation
+    const toast = document.createElement('div')
+    toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-xl glass z-50 text-sm text-white border-l-4 ${
+      type === 'success' ? 'border-emerald-400' : type === 'error' ? 'border-red-400' : 'border-amber-400'
+    }`
+    toast.textContent = message
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 4000)
   }
 
   const steps = [
