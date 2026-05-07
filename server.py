@@ -494,6 +494,140 @@ def get_recent_logs():
     
     return jsonify({"success": True, "logs": logs})
 
+# ===== CHAT ENDPOINT =====
+
+@app.route('/api/chat', methods=['POST'])
+def chat_with_agent():
+    """
+    Chat cu un agent AI prin Ollama local
+    Body: { agent_id, agent_type, business_id, message, history }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data"}), 400
+        
+        agent_id = data.get("agent_id", "default")
+        agent_type = data.get("agent_type", "hunter")
+        business_id = data.get("business_id", "default")
+        message = data.get("message", "")
+        history = data.get("history", [])
+        
+        if not message:
+            return jsonify({"success": False, "error": "Empty message"}), 400
+        
+        # Construiește prompt-ul sistem
+        agent_names = {
+            "hunter": "Lead Hunter Specialist",
+            "writer": "Content Creator",
+            "closer": "Sales Closer",
+            "support": "Customer Support Agent",
+            "analyst": "Business Intelligence Analyst",
+            "scout": "Market Intelligence Scout",
+        }
+        
+        system_prompt = f"""Ești {agent_names.get(agent_type, 'AI Agent')} pentru business-ul {business_id}.
+Rol: {agent_names.get(agent_type, 'Agent AI')}
+Răspunde ÎNTOTDEAUNA în limba română, cu diacritice.
+Fii concis, clar și acționabil.
+Nu folosi jargon tehnic fără explicații.
+Dacă nu știi ceva, spune direct — nu inventa."""
+        
+        # Construiește mesajele pentru Ollama
+        ollama_messages = [{"role": "system", "content": system_prompt}]
+        
+        # Adaugă istoricul (max 10 mesaje)
+        for h in history[-10:]:
+            if h.get("role") in ["user", "assistant"]:
+                ollama_messages.append({"role": h["role"], "content": h["content"]})
+        
+        # Adaugă mesajul curent
+        ollama_messages.append({"role": "user", "content": message})
+        
+        log_event("CHAT", f"Agent: {agent_type}, Business: {business_id}, Message: {message[:100]}")
+        
+        # Detectează modelul disponibil
+        model_name = "llama3.2:1b"
+        try:
+            import requests
+            models_resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+            if models_resp.status_code == 200:
+                available_models = [m.get("name", "") for m in models_resp.json().get("models", [])]
+                if available_models:
+                    # Folosește primul model disponibil
+                    model_name = available_models[0]
+                    log_event("CHAT", f"Using model: {model_name}")
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": "Niciun model Ollama disponibil",
+                        "response": "⚠️ Nu există modele Ollama descărcate.\n\nDescarcă un model:\nollama pull llama3.2:1b\n\nSau:\nollama pull llama3.2"
+                    }), 503
+        except Exception as e:
+            log_event("CHAT_WARN", f"Could not detect model: {e}")
+        
+        # Trimite către Ollama API
+        try:
+            ollama_response = requests.post(
+                f"{OLLAMA_URL}/api/chat",
+                json={
+                    "model": model_name,
+                    "messages": ollama_messages,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "num_predict": 500,
+                    }
+                },
+                timeout=60
+            )
+            
+            if ollama_response.status_code == 200:
+                result = ollama_response.json()
+                response_text = result.get("message", {}).get("content", "")
+                
+                log_event("CHAT_SUCCESS", f"Response: {response_text[:200]}")
+                
+                return jsonify({
+                    "success": True,
+                    "response": response_text,
+                    "agent_id": agent_id,
+                    "agent_type": agent_type,
+                    "model": "llama3.2:1b",
+                })
+            else:
+                error_msg = f"Ollama HTTP {ollama_response.status_code}: {ollama_response.text[:200]}"
+                log_event("CHAT_ERROR", error_msg)
+                return jsonify({
+                    "success": False,
+                    "error": error_msg,
+                    "response": "Eroare la comunicarea cu Ollama. Verifică că Ollama rulează (ollama serve)."
+                }), 500
+                
+        except requests.exceptions.ConnectionError:
+            log_event("CHAT_ERROR", "Cannot connect to Ollama")
+            return jsonify({
+                "success": False,
+                "error": "Ollama nu este accesibil",
+                "response": "⚠️ Ollama nu este pornit.\n\nPornește Ollama cu:\nollama serve\n\nApoi descarcă modelul:\nollama pull llama3.2:1b"
+            }), 503
+            
+        except requests.exceptions.Timeout:
+            log_event("CHAT_ERROR", "Ollama timeout")
+            return jsonify({
+                "success": False,
+                "error": "Timeout — modelul a durat prea mult să răspundă",
+                "response": "Modelul a durat prea mult. Încearcă din nou."
+            }), 504
+    
+    except Exception as e:
+        log_event("ERROR", f"Chat endpoint failed: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "response": "Eroare internă server."
+        }), 500
+
 # ===== ERROR HANDLERS =====
 @app.errorhandler(404)
 def not_found(e):
