@@ -122,6 +122,7 @@ export default function Dashboard() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
   const [testResults, setTestResults] = useState<Record<string, unknown> | null>(null)
   const [testing, setTesting] = useState(false)
+  const [tgStatus, setTgStatus] = useState<Record<string, unknown> | null>(null)
 
   const totalSteps = 9
   const progress = Math.round((step / totalSteps) * 100)
@@ -161,6 +162,15 @@ export default function Dashboard() {
       })
     } catch {
       setApiAvailable(false)
+    }
+    // Check Telegram status
+    try {
+      const tgRes = await fetch(`${API_BASE}/api/telegram/info`, { method: 'GET' })
+      if (tgRes.ok) {
+        setTgStatus(await tgRes.json())
+      }
+    } catch {
+      setTgStatus(null)
     }
   }
 
@@ -964,6 +974,12 @@ export default function Dashboard() {
             <div className="flex items-center justify-between glass rounded-lg px-3 py-2">
               <span className="text-xs text-white/50">Fișiere</span>
               <span className="text-xs text-white/70">{generatedFiles.length}/9</span>
+            </div>
+            <div className="flex items-center justify-between glass rounded-lg px-3 py-2">
+              <span className="text-xs text-white/50">Telegram</span>
+              <span className={`text-xs ${tgStatus?.success ? 'text-emerald-400' : 'text-white/40'}`}>
+                ● {tgStatus?.success ? (tgStatus?.bot as Record<string, unknown>)?.username || 'Connected' : 'Offline'}
+              </span>
             </div>
           </div>
         </div>

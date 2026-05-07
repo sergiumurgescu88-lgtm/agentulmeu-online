@@ -638,6 +638,347 @@ def internal_error(e):
     log_event("ERROR", f"Internal server error: {str(e)}")
     return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
+# ===== TELEGRAM BOT =====
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}" if TELEGRAM_TOKEN else ""
+
+def telegram_send(chat_id: int, text: str, parse_mode: str = "HTML"):
+    """Trimite un mesaj către un chat Telegram"""
+    if not TELEGRAM_TOKEN:
+        return {"error": "Token Telegram neconfigurat"}
+    try:
+        import requests
+        resp = requests.post(
+            f"{TELEGRAM_API}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": parse_mode},
+            timeout=30
+        )
+        return resp.json()
+    except Exception as e:
+        log_event("TG_ERROR", f"Send failed: {e}")
+        return {"error": str(e)}
+
+def telegram_typing(chat_id: int):
+    """Afișează indicatorul 'typing' în chat"""
+    if not TELEGRAM_TOKEN:
+        return
+    try:
+        import requests
+        requests.post(
+            f"{TELEGRAM_API}/sendChatAction",
+            json={"chat_id": chat_id, "action": "typing"},
+            timeout=10
+        )
+    except:
+        pass
+
+def chat_with_ollama(message: str, agent_type: str = "hunter", history: list = None) -> str:
+    """Trimite mesajul către Ollama și returnează răspunsul"""
+    try:
+        import requests
+        
+        agent_names = {
+            "hunter": "Lead Hunter Specialist",
+            "writer": "Content Creator",
+            "closer": "Sales Closer",
+            "support": "Customer Support Agent",
+            "analyst": "Business Intelligence Analyst",
+            "scout": "Market Intelligence Scout",
+        }
+        
+        system_prompt = f"""Ești {agent_names.get(agent_type, 'AI Agent')} pentru AgentulMeu.online.
+Rol: {agent_names.get(agent_type, 'Agent AI')}
+Răspunde ÎNTOTDEAUNA în limba română, cu diacritice corecte.
+Fii concis, clar și acționabil. Max 3-4 propoziții per răspuns.
+Nu folosi jargon tehnic fără explicații."""
+        
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            for h in history[-5:]:
+                messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+        messages.append({"role": "user", "content": message})
+        
+        # Detectează modelul
+        model = "llama3.2:1b"
+        try:
+            models_resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+            if models_resp.status_code == 200:
+                available = [m.get("name", "") for m in models_resp.json().get("models", [])]
+                if available:
+                    model = available[0]
+        except:
+            pass
+        
+        resp = requests.post(
+            f"{OLLAMA_URL}/api/chat",
+            json={
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "options": {"temperature": 0.7, "num_predict": 300}
+            },
+            timeout=60
+        )
+        
+        if resp.status_code == 200:
+            return resp.json().get("message", {}).get("content", "Eroare la procesare.")
+        else:
+            return f"⚠️ Eroare Ollama (HTTP {resp.status_code}). Verifică că Ollama rulează."
+    except requests.exceptions.ConnectionError:
+        return "⚠️ Ollama offline. Pornește cu: <code>ollama serve</code>"
+    except requests.exceptions.Timeout:
+        return "⏳ Modelul a durat prea mult. Încearcă din nou."
+    except Exception as e:
+        return f"❌ Eroare: {str(e)[:200]}"
+
+# Stocare simplă conversații (în memorie — pentru producție, folosește Redis/DB)
+telegram_sessions = {}
+
+def get_session(chat_id: int) -> dict:
+    """Obține sau creează o sesiune de conversație"""
+    if chat_id not in telegram_sessions:
+        telegram_sessions[chat_id] = {
+            "agent_type": "hunter",
+            "business_id": "default",
+            "history": [],
+            "started": datetime.now().isoformat(),
+        }
+    return telegram_sessions[chat_id]
+
+@app.route('/api/telegram/webhook', methods=['POST'])
+def telegram_webhook():
+    """
+    Webhook care primește update-uri de la Telegram Bot API
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        
+        if "message" not in data:
+            return jsonify({"ok": True}), 200
+        
+        msg = data["message"]
+        chat_id = msg.get("chat", {}).get("id")
+        text = msg.get("text", "")
+        user = msg.get("from", {})
+        username = user.get("username", user.get("first_name", "Utilizator"))
+        
+        log_event("TG_MESSAGE", f"From {username} ({chat_id}): {text[:100]}")
+        
+        session = get_session(chat_id)
+        
+        # Parse commandă
+        if text.startswith("/"):
+            cmd = text.split()[0].lower()
+            args = text[len(cmd):].strip()
+            
+            if cmd == "/start":
+                welcome = f"""🤖 <b>Bun venit la AgentulMeu.online!</b>
+
+Salut, {username}! Sunt agentul tău AI personalizat.
+
+<b>Comenzi disponibile:</b>
+/start — Acest mesaj
+/help — Ajutor complet
+/chat &lt;mesaj&gt; — Vorbește cu agentul AI
+/status — Status server (Hermes, Ollama)
+/agents — Lista agenților disponibili
+/setagent &lt;tip&gt; — Schimbă tipul agentului
+/history — Istoric conversație
+/clear — Șterge istoricul
+
+💡 <i>Scrie orice mesaj pentru a începe conversația!</i>"""
+                telegram_send(chat_id, welcome)
+                
+            elif cmd == "/help":
+                help_text = f"""📖 <b>Ajutor AgentulMeu</b>
+
+<b>💬 Chat AI</b>
+Scrie orice mesaj și agentul tău va răspunde în română.
+
+<b>🤖 Tipuri de agenți:</b>
+/setagent hunter — Lead Generator (găsește clienți)
+/setagent writer — Content Creator (scrie conținut)
+/setagent closer — Sales Closer (vinde)
+/setagent support — Customer Support (asistență)
+/setagent analyst — Data Analyst (analize)
+/setagent scout — Market Intel (competitori)
+
+<b>⚡ Comenzi rapide:</b>
+/status — Verifică statusul serverului
+/agents — Vezi toți agenții
+/clear — Șterge istoricul
+
+<b>🔗 Link-uri utile:</b>
+Dashboard: https://agentulmeu.online/dashboard
+Agenți: https://agentulmeu.online/agents
+
+<i>Agentul folosește Ollama local — datele tale rămân private.</i>"""
+                telegram_send(chat_id, help_text)
+                
+            elif cmd == "/status":
+                hermes_ok = shutil.which(HERMES_CMD) is not None
+                ollama_status = "🔴 Offline"
+                try:
+                    import requests
+                    r = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+                    if r.status_code == 200:
+                        models = [m["name"] for m in r.json().get("models", [])]
+                        ollama_status = f"🟢 Online ({', '.join(models[:3])})"
+                except:
+                    pass
+                
+                status_text = f"""📊 <b>Status Server</b>
+
+🤖 <b>Hermes Agent:</b> {"🟢 Online" if hermes_ok else "🔴 Offline"}
+🦙 <b>Ollama:</b> {ollama_status}
+🤖 <b>Agent activ:</b> {session['agent_type'].upper()}
+💬 <b>Mesaje în sesiune:</b> {len(session['history'])}
+📅 <b>Sesiune începută:</b> {session['started'][:10]}
+
+<i>Server: agentulmeu.online</i>"""
+                telegram_send(chat_id, status_text)
+                
+            elif cmd == "/agents":
+                agents_text = f"""🤖 <b>Agenți Disponibili</b>
+
+1️⃣ <b>Hunter</b> — Găsește și califică lead-uri
+2️⃣ <b>Writer</b> — Generează conținut marketing
+3️⃣ <b>Closer</b> — Convertește lead-uri în vânzări
+4️⃣ <b>Support</b> — Asistență clienți 24/7
+5️⃣ <b>Analyst</b> — Analize și rapoarte
+6️⃣ <b>Scout</b> — Inteligență competitivă
+
+<b>Agent tău actual:</b> {session['agent_type'].upper()}
+
+Schimbă agentul cu:
+<code>/setagent hunter</code>"""
+                telegram_send(chat_id, agents_text)
+                
+            elif cmd == "/setagent":
+                valid = ["hunter", "writer", "closer", "support", "analyst", "scout"]
+                if args.lower() in valid:
+                    session["agent_type"] = args.lower()
+                    session["history"] = []  # Reset history for new agent
+                    telegram_send(chat_id, f"✅ Agent schimbat la <b>{args.upper()}</b>! Istoricul a fost resetat.")
+                else:
+                    telegram_send(chat_id, f"❌ Tip invalid. Folosește: {', '.join(valid)}")
+                    
+            elif cmd == "/clear":
+                session["history"] = []
+                telegram_send(chat_id, "🗑️ <b>Istoricul a fost șters!</b> Conversație nouă începută.")
+                
+            elif cmd == "/history":
+                if not session["history"]:
+                    telegram_send(chat_id, "ℹ️ Nicio conversație încă.")
+                else:
+                    hist_text = "📜 <b>Istoric Conversație</b>\n\n"
+                    for i, h in enumerate(session["history"][-10:], 1):
+                        role = "👤 Tu" if h["role"] == "user" else "🤖 Bot"
+                        content = h["content"][:80] + "..." if len(h["content"]) > 80 else h["content"]
+                        hist_text += f"{i}. {role}: {content}\n"
+                    telegram_send(chat_id, hist_text)
+                    
+            elif cmd == "/chat":
+                if not args:
+                    telegram_send(chat_id, "💬 Folosește: <code>/chat salut, cum funcționezi?</code>")
+                else:
+                    _process_chat_message(chat_id, args, session)
+            else:
+                telegram_send(chat_id, f"❓ Comandă necunoscută: {cmd}\nFolosește /help pentru lista de comenzi.")
+        else:
+            # Mesaj normal — procesează prin Ollama
+            _process_chat_message(chat_id, text, session)
+        
+        return jsonify({"ok": True}), 200
+        
+    except Exception as e:
+        log_event("TG_ERROR", f"Webhook error: {str(e)}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+def _process_chat_message(chat_id: int, text: str, session: dict):
+    """Procesează un mesaj de chat și trimite răspunsul prin Telegram"""
+    # Adaugă mesajul user-ului în istoric
+    session["history"].append({"role": "user", "content": text})
+    
+    # Afișează typing indicator
+    telegram_typing(chat_id)
+    
+    # Trimite către Ollama
+    response = chat_with_ollama(
+        message=text,
+        agent_type=session["agent_type"],
+        history=session["history"]
+    )
+    
+    # Adaugă răspunsul în istoric
+    session["history"].append({"role": "assistant", "content": response})
+    
+    # Trimite răspunsul pe Telegram (max 4096 caractere)
+    if len(response) > 4000:
+        response = response[:4000] + "\n\n<i>(mesaj trunchiat)</i>"
+    
+    telegram_send(chat_id, response)
+
+@app.route('/api/telegram/set-webhook', methods=['POST'])
+def telegram_set_webhook():
+    """Configurează webhook-ul Telegram"""
+    try:
+        if not TELEGRAM_TOKEN:
+            return jsonify({"success": False, "error": "TELEGRAM_BOT_TOKEN neconfigurat"}), 400
+        
+        data = request.get_json() or {}
+        webhook_url = data.get("webhook_url", "")
+        
+        if not webhook_url:
+            return jsonify({"success": False, "error": "Lipsește webhook_url"}), 400
+        
+        import requests
+        resp = requests.post(
+            f"{TELEGRAM_API}/setWebhook",
+            json={"url": webhook_url, "allowed_updates": ["message"]},
+            timeout=10
+        )
+        result = resp.json()
+        
+        log_event("TG_WEBHOOK", f"Set webhook: {webhook_url}", {"result": result})
+        
+        if result.get("ok"):
+            return jsonify({"success": True, "message": "Webhook configurat!", "result": result})
+        else:
+            return jsonify({"success": False, "error": result.get("description", "Unknown error")}), 500
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/telegram/info', methods=['GET'])
+def telegram_info():
+    """Informații despre bot-ul Telegram"""
+    try:
+        if not TELEGRAM_TOKEN:
+            return jsonify({
+                "success": False,
+                "configured": False,
+                "error": "Token Telegram neconfigurat. Setează TELEGRAM_BOT_TOKEN în .env"
+            })
+        
+        import requests
+        resp = requests.get(f"{TELEGRAM_API}/getMe", timeout=10)
+        bot_info = resp.json()
+        
+        webhook_resp = requests.get(f"{TELEGRAM_API}/getWebhookInfo", timeout=10)
+        webhook_info = webhook_resp.json()
+        
+        return jsonify({
+            "success": True,
+            "configured": True,
+            "bot": bot_info.get("result", {}),
+            "webhook": webhook_info.get("result", {}),
+            "sessions_active": len(telegram_sessions),
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # ===== MAIN =====
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 8080))
