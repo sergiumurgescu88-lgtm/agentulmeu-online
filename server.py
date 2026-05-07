@@ -298,6 +298,182 @@ def hermes_status():
         "output_files_count": sum(1 for _ in OUTPUT_DIR.rglob("*.md"))
     })
 
+# ===== TEST ENDPOINT — Generare Rapidă =====
+
+TEST_PROFILE = {
+    "business": {
+        "business_id": "neoterm_test",
+        "name": "NeoTerm Test",
+        "type": ["B2C", "construction"],
+        "description": "Instalăm izolație celulozică ISOGREEN în case noi și renovate",
+        "products": "Izolație celulozică — 80 lei/mp",
+        "ideal_client": "Proprietari case noi, 35-55 ani, Oltenia",
+        "region": "Dolj, Olt, Gorj",
+        "website": "https://neoterm.ro",
+        "revenue_model": "Servicii + produse"
+    },
+    "goals": {
+        "primary": ["leads", "sales"],
+        "top_problem": "Pierd timp cu răspunsuri repetitive",
+        "repetitive_tasks": ["Verificare stoc", "Trimitere proforme"],
+        "priority_90days": "Automatizarea fluxului de lead-uri"
+    },
+    "agents_needed": ["hunter", "writer", "support"],
+    "personality": {
+        "voice": "Prietenos și clar",
+        "autonomy": "semi-autonom",
+        "red_lines": [
+            "Nu oferi informații false",
+            "Nu promite ce nu poți livra",
+            "Respectă confidențialitatea datelor"
+        ],
+        "usp": "Garanție 15 ani + instalare în 48h"
+    },
+    "channels": {
+        "communication": ["Telegram", "Email"],
+        "crm": "Google Sheets",
+        "integrations": []
+    }
+}
+
+@app.route('/api/test-generate', methods=['POST'])
+def test_generate():
+    """
+    Endpoint de test rapid: generează agenți cu profil hardcodat
+    Folosește skill-ul build_business_agents prin Hermes
+    """
+    try:
+        # Salvează profilul de test
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        test_filename = f"test_{timestamp}.json"
+        test_path = PROFILES_DIR / test_filename
+        
+        with open(test_path, "w", encoding="utf-8") as f:
+            json.dump(TEST_PROFILE, f, indent=2, ensure_ascii=False)
+        
+        log_event("TEST_PROFILE", f"Saved test profile: {test_filename}")
+        
+        # Verifică dacă Hermes este disponibil
+        hermes_path = shutil.which(HERMES_CMD)
+        if not hermes_path:
+            log_event("ERROR", "Hermes not found in PATH")
+            return jsonify({
+                "success": False,
+                "error": "Hermes nu este instalat. Verifică: export PATH=\"$HOME/.local/bin:$PATH\"",
+                "files": [],
+                "output_dir": str(OUTPUT_DIR)
+            }), 500
+        
+        # Construiește comanda Hermes
+        agents_to_generate = ",".join(TEST_PROFILE["agents_needed"])
+        
+        # Scrie fișierele .AGENT.md direct (simplificat pentru test)
+        business_id = TEST_PROFILE["business"]["business_id"]
+        business_dir = OUTPUT_DIR / business_id
+        business_dir.mkdir(parents=True, exist_ok=True)
+        
+        generated_files = []
+        for agent_name in TEST_PROFILE["agents_needed"]:
+            agent_file = business_dir / f"{agent_name}.AGENT.md"
+            
+            # Conținut agent generat
+            agent_content = f"""---
+agent_id: {business_id}_{agent_name}
+business: {TEST_PROFILE["business"]["name"]}
+role: {agent_name.upper()}
+autonomy: {TEST_PROFILE["personality"]["autonomy"]}
+created: {datetime.now().strftime("%Y-%m-%d")}
+language: ro
+---
+
+## 🎯 Rolul Tău
+Ești agentul {agent_name.upper()} pentru {TEST_PROFILE["business"]["name"]}.
+
+## 📋 Context Business
+- Nume: {TEST_PROFILE["business"]["name"]}
+- Tip: {', '.join(TEST_PROFILE["business"]["type"])}
+- Descriere: {TEST_PROFILE["business"]["description"]}
+- Client ideal: {TEST_PROFILE["business"]["ideal_client"]}
+- Zona: {TEST_PROFILE["business"]["region"]}
+- USP: {TEST_PROFILE["personality"]["usp"]}
+
+## 🚫 Reguli Absolute
+{chr(10).join(f"- {r}" for r in TEST_PROFILE["personality"]["red_lines"])}
+
+## 🗣️ Ton Verbal
+{TEST_PROFILE["personality"]["voice"]}
+
+## ⚙️ Instrucțiuni Specifice
+[Generatează prin Hermes cu skill-ul build_business_agents]
+
+## 💬 Exemple Mesaje (în română)
+1. "Salut! Suntem {TEST_PROFILE["business"]["name"]}. Cum te putem ajuta cu {TEST_PROFILE["business"]["products"]}?"
+2. "Pentru {TEST_PROFILE["business"]["region"]}, oferim {TEST_PROFILE["personality"]["usp"]}."
+3. "Dorești o evaluare gratuită? Răspunde cu DA și te contactăm în 24h."
+
+## 📊 Metrici
+- Lead-uri calificate / săptămână
+- Rata de conversie
+- Scor satisfacție client
+"""
+            agent_file.write_text(agent_content, encoding="utf-8")
+            generated_files.append(f"{business_id}/{agent_name}.AGENT.md")
+            log_event("TEST_AGENT", f"Generated test agent file: {agent_file}")
+        
+        # Încearcă și generarea prin Hermes CLI (opțional)
+        try:
+            hermes_result = subprocess.run(
+                [
+                    HERMES_CMD,
+                    "run",
+                    "skill=build_business_agents",
+                    "--arg", f'profile_path="{test_path}"',
+                    "--arg", f'output_dir="{OUTPUT_DIR}"',
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            hermes_output = hermes_result.stdout.strip() if hermes_result.stdout else ""
+            hermes_stderr = hermes_result.stderr.strip() if hermes_result.stderr else ""
+            
+            log_event("TEST_HERMES", f"Hermes exit code: {hermes_result.returncode}", {
+                "stdout": hermes_output[:500] if hermes_output else "",
+                "stderr": hermes_stderr[:500] if hermes_stderr else "",
+            })
+        except Exception as e:
+            log_event("TEST_HERMES", f"Hermes generation skipped: {str(e)}")
+            hermes_output = "Generare Hermes a fost sărită — fișiere create direct."
+        
+        # Verifică fișierele generate
+        all_files = []
+        if business_dir.exists():
+            for f in business_dir.glob("*.md"):
+                all_files.append({
+                    "name": f.name,
+                    "size": f.stat().st_size,
+                    "path": str(f),
+                })
+        
+        return jsonify({
+            "success": True,
+            "message": f"✅ {len(generated_files)} agenți test generați cu succes!",
+            "profile": test_filename,
+            "business_id": business_id,
+            "files": all_files,
+            "output_dir": str(OUTPUT_DIR / business_id),
+            "hermes_output": hermes_output[:1000] if hermes_output else "",
+            "test_profile": TEST_PROFILE,
+        })
+    
+    except Exception as e:
+        log_event("ERROR", f"Test generate failed: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "files": [],
+        }), 500
+
 @app.route('/api/logs/recent', methods=['GET'])
 def get_recent_logs():
     """Returnează ultimele log-uri pentru frontend (debug)"""

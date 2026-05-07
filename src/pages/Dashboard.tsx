@@ -120,6 +120,8 @@ export default function Dashboard() {
   const [hermesStatus, setHermesStatus] = useState({ hermes: false, ollama: false })
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
+  const [testResults, setTestResults] = useState<Record<string, unknown> | null>(null)
+  const [testing, setTesting] = useState(false)
 
   const totalSteps = 9
   const progress = Math.round((step / totalSteps) * 100)
@@ -159,6 +161,28 @@ export default function Dashboard() {
       })
     } catch {
       setApiAvailable(false)
+    }
+  }
+
+  const runTestGenerate = async () => {
+    setTesting(true)
+    setTestResults(null)
+    try {
+      const res = await fetch(`${API_BASE}/api/test-generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (data.success) {
+        setTestResults(data)
+        showToast(`✅ ${(data as Record<string, unknown>).message as string}`, 'success')
+      } else {
+        showToast(`❌ ${(data as Record<string, unknown>).error as string || 'Test eșuat'}`, 'error')
+      }
+    } catch (e) {
+      showToast(`❌ Eroare: ${(e as Error).message}`, 'error')
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -906,10 +930,19 @@ export default function Dashboard() {
 
         {/* Status Panel */}
         <div className="glass rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-4 h-4 text-cyan-400" />
-            <span className="text-sm font-medium text-white">Activitate Live</span>
-            <span className="text-xs text-white/40 ml-auto">Actualizat acum</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-medium text-white">Activitate Live</span>
+            </div>
+            <Button
+              size="sm"
+              onClick={runTestGenerate}
+              disabled={testing}
+              className="bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-400 border border-cyan-400/30 hover:bg-cyan-400/10 text-xs px-3 py-1"
+            >
+              {testing ? '⏳ Se testează...' : <><Zap className="w-3 h-3 mr-1" /> Testare Rapidă</>}
+            </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="flex items-center justify-between glass rounded-lg px-3 py-2">
@@ -934,6 +967,31 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Test Results */}
+        {testResults && testResults.files && (
+          <div className="glass rounded-2xl p-6 mb-6 border border-emerald-400/20">
+            <div className="flex items-center gap-2 mb-4">
+              <Check className="w-5 h-5 text-emerald-400" />
+              <span className="text-emerald-400 font-medium">Rezultate Test</span>
+              <span className="text-xs text-white/40 ml-auto">{(testResults.files as Array<Record<string, unknown>>).length} fișiere generate</span>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {(testResults.files as Array<Record<string, unknown>>).map((f: Record<string, unknown>, idx: number) => (
+                <div key={idx} className="glass rounded-lg p-3 flex items-center gap-3">
+                  <FileText className="w-4 h-4 text-cyan-400" />
+                  <div>
+                    <p className="text-sm text-white">{f.name as string}</p>
+                    <p className="text-xs text-white/40">{f.size as number} bytes</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {testResults.output_dir && (
+              <p className="text-xs text-white/40 mt-3">Output: {testResults.output_dir as string}</p>
+            )}
+          </div>
+        )}
 
         {/* Reset */}
         <div className="text-center mt-6">
